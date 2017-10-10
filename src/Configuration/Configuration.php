@@ -120,7 +120,7 @@ class Configuration
     public function parse($value)
     {
         if (is_string($value)) {
-            $value = preg_replace_callback('/\{\{\s*([\w\.\/-]+)\s*\}\}/', [$this, 'parseCallback'], $value);
+            $value = preg_replace_callback(Deployer::VARIABLE_REGEX, [$this, 'parseCallback'], $value);
         }
 
         return $value;

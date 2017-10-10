@@ -273,21 +273,21 @@ function run($command, $options = [])
     $host = Context::get()->getHost();
     $hostname = $host->getHostname();
 
+    $workingPath = get('working_path', '');
+    if (!empty($workingPath)) {
+        $command = "cd $workingPath && ($command)";
+    }
+
     if (has('command_template') && get('apply_command_template', true) !== false) {
         $template = get('command_template');
         if ($template) {
-            $template = preg_replace('/\{\{\s*\?([\w\.\/-]+)\s*\}\}/', '{{\1}}', $template);
+            $template = preg_replace(Deployer::VARIABLE_DELAYED_PARSING_REGEX, '{{\1}}', $template);
             set('command', escapeshellarg($command));
             $command = $template;
         }
     }
 
-    $command = parse($command);
-    $workingPath = get('working_path', '');
-
-    if (!empty($workingPath)) {
-        $command = "cd $workingPath && ($command)";
-    }
+    $command = preg_replace(Deployer::VARIABLE_NO_PARSING_REGEX, '{{\1}}', parse($command));
 
     $env = get('env', []) + ($options['env'] ?? []);
     if (!empty($env)) {
@@ -484,6 +484,37 @@ function writeln($message, $options = 0)
 function write($message, $options = 0)
 {
     output()->write(parse($message), $options);
+}
+
+function startOperation($message)
+{
+    if (output()->getVerbosity() >= OutputInterface::VERBOSITY_NORMAL) {
+        writeln('➤ ' . $message);
+        output()->setWasWritten(false);
+    }
+}
+
+function endOperation()
+{
+    $output = output();
+    $shouldReplaceMark =
+                $output->isDecorated() &&
+                $output->getVerbosity() === OutputInterface::VERBOSITY_NORMAL &&
+                !$output->getWasWritten();
+
+    if ($shouldReplaceMark) {
+        writeln("\r\033[K\033[1A\r<info>✔</info>");
+    }
+    else {
+        writeln("<info>✔</info> Ok");
+    }
+}
+
+function operation($message, callable $callback)
+{
+    startOperation($message);
+    $callback();
+    endOperation();
 }
 
 /**

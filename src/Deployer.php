@@ -54,6 +54,9 @@ use function Deployer\Support\array_merge_alternate;
  */
 class Deployer extends Container
 {
+    const VARIABLE_REGEX = '/\{\{\s*([\w\.\/-]+)\s*\}\}/';
+    const VARIABLE_DELAYED_PARSING_REGEX = '/\{\{\s*\?([\w\.\/-]+)\s*\}\}/';
+    const VARIABLE_NO_PARSING_REGEX = '/\{\{\s*\!([\w\.\/-]+)\s*\}\}/';
     /**
      * Global instance of deployer. It's can be accessed only after constructor call.
      * @var Deployer
